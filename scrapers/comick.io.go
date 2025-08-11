@@ -2,13 +2,15 @@ package scrapers
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 )
 
 func search(query string) []Book {
+	headers := BaseHeaders.Clone()
+	headers.Set("Referer", "https://comick.io/")
+	headers.Set("Origin", "https://comick.io")
 
 	baseURL := "https://api.comick.io/v1.0/search"
 	u, err := url.Parse(baseURL)
@@ -29,14 +31,6 @@ func search(query string) []Book {
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		panic(err)
-	}
-
-	headers := BaseHeaders.Clone()
-	headers.Set("Referer", "https://comick.io/")
-	headers.Set("Origin", "https://comick.io")
-
-	for k, h := range headers {
-		fmt.Printf("%s: %s\n", k, h)
 	}
 
 	req.Header = headers
@@ -63,7 +57,6 @@ func search(query string) []Book {
 	}
 
 	var data []Data
-	fmt.Print(string(body))
 	err = json.Unmarshal(body, &data)
 	if err != nil {
 		panic(err)
@@ -83,9 +76,6 @@ func search(query string) []Book {
 	}
 
 	return books
-
-	// curl 'https://api.comick.io/v1.0/search?q=angel+nex^&t=true' \
-	// --compressed \
 }
 
 func init() {
