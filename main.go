@@ -31,6 +31,12 @@ func main() {
 		return
 	}
 
+	if args[0] == "c" || args[0] == "chapters" {
+		id := strings.Join(args[1:], " ")
+		chapters(id)
+		return
+	}
+
 }
 
 
@@ -40,6 +46,16 @@ func search(query string) {
 	books := scrapers.Registry[site].Search(query)
 	for i, b := range books {
 		fmt.Printf("\033[35m%d: \033[33m%s\033[32m/\033[94m%s\033[32m:\033[96m%s\n", i, site, b.Id, b.Title)
+	}
+
+}
+
+func chapters(id string) {
+	fmt.Printf("id: %s\n", id)
+	site := "comick.io"
+	results := scrapers.Registry[site].Chapters(id)
+	for i, c := range results {
+		fmt.Printf("\033[35m%d: \033[33m%s\033[32m/\033[94m%s\033[32m:\033[96m%s \033[34m{ %s }\n", i, site, c.Id, c.Title, c.Info)
 	}
 
 }

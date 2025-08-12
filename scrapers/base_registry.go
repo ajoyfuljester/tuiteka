@@ -5,8 +5,15 @@ type Book struct {
 	Title string
 }
 
+type Chapter struct {
+	Id string
+	Title string
+	Info string
+}
+
 type ScraperFuncs struct {
 	Search func(string) []Book
+	Chapters func(string) []Chapter
 }
 
 var Registry = make(map[string]ScraperFuncs)
