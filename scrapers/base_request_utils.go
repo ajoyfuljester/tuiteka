@@ -1,6 +1,11 @@
 package scrapers
 
-import "net/http"
+import (
+	"net/http"
+	"image"
+	_ "image/png"
+	_ "image/jpeg"
+)
 
 
 var BaseHeaders = http.Header{}
@@ -21,3 +26,33 @@ func init() {
 	BaseHeaders.Set("Sec-Fetch-Site", "same-site")
 	BaseHeaders.Set("Connection", "keep-alive")
 }
+
+
+func GetImage(urlString string) image.Image {
+	headers := getHeaders()
+
+	req, err := http.NewRequest("GET", urlString, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	req.Header = headers
+
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+
+	defer resp.Body.Close()
+
+	img, _, err := image.Decode(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+
+
+	return img
+}
+
