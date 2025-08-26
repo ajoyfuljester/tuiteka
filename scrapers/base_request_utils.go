@@ -2,9 +2,12 @@ package scrapers
 
 import (
 	"net/http"
+
 	"image"
 	_ "image/png"
 	_ "image/jpeg"
+
+	"sync"
 )
 
 
@@ -28,12 +31,11 @@ func init() {
 }
 
 
-func GetImage(urlString string) image.Image {
-	headers := getHeaders()
+func getImage(urlString string, headers http.Header) (image.Image, error) {
 
 	req, err := http.NewRequest("GET", urlString, nil)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	req.Header = headers
@@ -42,17 +44,61 @@ func GetImage(urlString string) image.Image {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	defer resp.Body.Close()
 
 	img, _, err := image.Decode(resp.Body)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 
-	return img
+	return img, nil
 }
 
+var MaxConcurrencyPerImageSlice = 5
+
+
+func getImages(urls []string, headers http.Header) ([]image.Image, error) {
+
+	sem := make(chan struct{}, MaxConcurrencyPerImageSlice)
+
+	var wg sync.WaitGroup
+
+	images := make([]image.Image, len(urls))
+	errors := make([]error, len(urls))
+
+	var lastError error
+
+	wg.Add(len(urls))
+	for i, url := range urls {
+
+		go func(i int, url string) {
+			defer wg.Done()
+
+			sem <- struct{}{}
+			defer func() { <- sem }()
+
+			img, err := getImage(url, headers)
+			if err != nil {
+				errors[i] = err
+				lastError = err
+				return
+			}
+
+			images[i] = img
+
+
+		}(i, url)
+
+	}
+
+	wg.Wait()
+
+
+
+	return images, lastError
+
+}
