@@ -2,18 +2,22 @@ package scrapers
 
 type Book struct {
 	Id string
+	Slug string
 	Title string
 }
 
 type Chapter struct {
 	Id string
-	Title string
 	Info string
+	Language string
+	Number string
 }
 
 type ScraperFuncs struct {
 	Search func(string) []Book
 	Chapters func(string) []Chapter
+	Pages func(string, string)
+	Interactive func(string)
 }
 
 var Registry = make(map[string]ScraperFuncs)
