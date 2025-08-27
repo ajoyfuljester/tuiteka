@@ -1,5 +1,9 @@
 package scrapers
 
+import (
+	"image"
+)
+
 type Book struct {
 	Id string
 	Slug string
@@ -17,7 +21,7 @@ type ScraperFuncs struct {
 	Search func(string) []Book
 	Chapters func(string) []Chapter
 	Pages func(string, string)
-	Interactive func(string)
+	Interactive func(string) []image.Image
 }
 
 var Registry = make(map[string]ScraperFuncs)

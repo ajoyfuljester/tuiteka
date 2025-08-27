@@ -11,7 +11,6 @@ import (
 
 	"tuiteka/utils"
 	"github.com/PuerkitoBio/goquery"
-	termimg "github.com/blacktop/go-termimg"
 )
 
 
@@ -129,7 +128,6 @@ func init() {
 		}
 
 		// TODO: handle if id is wrong
-		fmt.Print(string(body))
 
 
 		type ChapterWrapper struct {

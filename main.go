@@ -3,9 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 	"strings"
 
+	"golang.org/x/term"
+
 	"tuiteka/scrapers"
+	"tuiteka/reader"
 )
 
 
@@ -14,6 +18,7 @@ func main() {
 	flag.Parse()
 	args := flag.Args()
 	fmt.Println(len(args))
+
 
 
 	fmt.Println("Hello there!")
@@ -92,7 +97,11 @@ func pages(slug string, chapter string) {
 
 func interactive(query string) {
 	site := "comick.io"
-	scrapers.Registry[site].Interactive(query)
+	images := scrapers.Registry[site].Interactive(query)
+
+
+	reader.DisplayImage(images[0])
+
 
 
 
