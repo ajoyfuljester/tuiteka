@@ -3,10 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os"
 	"strings"
-
-	"golang.org/x/term"
 
 	"tuiteka/scrapers"
 	"tuiteka/reader"
@@ -100,9 +97,6 @@ func interactive(query string) {
 	images := scrapers.Registry[site].Interactive(query)
 
 
-	reader.DisplayImage(images[0])
-
-
-
+	reader.Read(images)
 
 }
