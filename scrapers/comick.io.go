@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"image"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
 
 	"tuiteka/utils"
+
 	"github.com/PuerkitoBio/goquery"
 )
 
@@ -24,6 +26,10 @@ func init() {
 		headers.Set("Referer", "https://comick.io/")
 		headers.Set("Origin", "https://comick.io")
 
+
+
+
+
 		return headers
 
 	}
@@ -36,6 +42,8 @@ func init() {
 		if err != nil {
 			panic(err)
 		}
+
+		
 
 		formattedQuery := query
 
@@ -78,6 +86,9 @@ func init() {
 
 		var data []Data
 		err = json.Unmarshal(body, &data)
+		fmt.Printf("%s\n", u.String())
+		fmt.Printf("%s\n", string(body))
+		fmt.Printf("%s\n", resp.Status)
 		if err != nil {
 			panic(err)
 		}
@@ -139,6 +150,9 @@ func init() {
 
 		type Data struct {
 			Chapters []ChapterWrapper `json:"chapters"`
+			TotalChapters int `json:"total"`
+			// chapter limit per request... hopefuly constant, equal to 60
+			ChapterLimit int `json:"limit"`
 		}
 
 		var data Data
@@ -147,17 +161,71 @@ func init() {
 			panic(err)
 		}
 
-		chaps := make([]Chapter, 0, len(data.Chapters))
 
-		for _, c := range data.Chapters {
-			chaps = append(chaps, Chapter{
-				Id: c.Id,
-				Number: c.Number,
-				Language: c.Language,
-				Info: fmt.Sprintf("[%s]", strings.Join(c.Groups, ", ")),
-			})
+		chapterParts := make([][]ChapterWrapper, 0)
+		pageNumber := 2
+		for len(chapterParts) < data.TotalChapters {
+			fmt.Printf("Fetching chapters: %d/%d\n", len(chapterParts), data.TotalChapters)
+			u, err := url.Parse(fmt.Sprintf("https://api.comick.io/comic/%s/chapters", id))
+
+
+			q := u.Query()
+			q.Set("page", fmt.Sprint(pageNumber))
+
+			u.RawQuery = q.Encode()
+
+			req, err := http.NewRequest("GET", requestURL, nil)
+			if err != nil {
+				panic(err)
+			}
+
+			req.Header = headers
+
+
+			client := &http.Client{}
+			resp, err := client.Do(req)
+			if err != nil {
+				panic(err)
+			}
+
+			defer resp.Body.Close()
+
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				panic(err)
+			}
+
+
+			var localData Data
+			err = json.Unmarshal(body, &localData)
+			if err != nil {
+				panic(err)
+			}
+
+			// 2 is the starting point, so 2 - 2 = 0
+			chapterParts[pageNumber - 2] = localData.Chapters
+
 
 		}
+
+
+		chaps := make([]Chapter, 0, data.TotalChapters)
+		index := 0
+		for _, chapSlice := range chapterParts {
+			for _, chap := range chapSlice {
+				chaps[index] = Chapter{
+					Id: chap.Id,
+					Number: chap.Number,
+					Language: chap.Language,
+					Info: fmt.Sprintf("[%s]", strings.Join(chap.Groups, ", ")),
+				}
+
+
+				index++
+			}
+		}
+
+
 
 		return chaps
 
@@ -222,10 +290,6 @@ func init() {
 		err = json.Unmarshal([]byte(dataString), &dataWrapper)
 
 		data := dataWrapper.Props.PageProps.Chapter.Data
-
-		for i, d := range data {
-			fmt.Printf("\033[37m%d: %s\n", i, d.FileName)
-		}
 
 
 		urls := utils.Map(data, func(pd PageData) string {
